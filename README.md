@@ -5,6 +5,7 @@ Backup continuously to GCS. Database should be running.
 docker run -v DIRECTORY_TO_BACKUP:/data -e GCLOUD_KEYFILE_BASE64= -e GCLOUD_PROJECT= -e BUCKET=gs:// -e DBHOST= -e DBPORT=3306 -e DBUSER= -e DBPASS= gregory90/file-backup-gcs /app/run
 ```
 
+
 ##### Environment variables
 GCLOUD_KEYFILE_BASE64 - service account json key,  
 GCLOUD_PROJECT - project id,  
