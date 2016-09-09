@@ -1,0 +1,80 @@
+#!/bin/bash -e
+
+if [ -z "$GCLOUD_KEYFILE_BASE64" ] ; then
+    echo "GCLOUD_KEYFILE_BASE64 env is required!"
+    exit 1
+fi
+
+if [ -z "$GCLOUD_PROJECT" ] ; then
+    echo "GCLOUD_PROJECT env is required!"
+    exit 1
+fi
+
+if [ -z "$BUCKET" ] ; then
+    echo "BUCKET env is required!"
+    exit 1
+fi
+
+if [ -z "$DBHOST" ] ; then
+    echo "DBHOST env is required!"
+    exit 1
+fi
+
+if [ -z "$DBPORT" ] ; then
+    echo "DBPORT env is required!"
+    exit 1
+fi
+
+if [ -z "$DBUSER" ] ; then
+    echo "DBUSER env is required!"
+    exit 1
+fi
+
+if [ -z "$DBPASS" ] ; then
+    echo "DBPASS env is required!"
+    exit 1
+fi
+
+DATADIR="/data"
+
+UPLOADED=20
+
+echo "Authenticating to Google Cloud..."
+echo $GCLOUD_KEYFILE_BASE64 | base64 --decode > /key.json
+gcloud auth activate-service-account --key-file /key.json --project "$GCLOUD_PROJECT" -q
+
+backup_and_stream_to_gcs() {
+  while true
+  do
+    if (( $UPLOADED>=24 )); then
+      echo "Clean directories..."
+      rm -rf /backup/*
+      echo "Performing backup..."
+
+      innobackupex --defaults-file=/app/my.cnf --host=$DBHOST --port=$DBPORT --user=$DBUSER --password=$DBPASS /backup
+
+      BACKUP=`ls /backup`
+
+      innobackupex --defaults-file=/app/my.cnf --apply-log /backup/$BACKUP
+
+      tar -cf /backup/$BACKUP.tar /backup/$BACKUP
+      gzip -7 /backup/$BACKUP.tar
+
+      echo "Uploading $BACKUP to $BUCKET/$BACKUP.tar.gz"
+      gsutil cp "/backup/$BACKUP.tar.gz" $BUCKET/$BACKUP.tar.gz
+      echo "Upload complete."
+
+      echo "Waiting..."
+      UPLOADED=$(( 0 ))
+    else 
+      echo "Backup is performed once in 24 hours. Time from last backup: $UPLOADED hours. Waiting..."
+    fi
+
+    UPLOADED=$(( $UPLOADED+1 ))
+    sleep 3600
+  done
+}
+
+backup_and_stream_to_gcs
+
+wait
