@@ -37,7 +37,7 @@ fi
 
 DATADIR="/data"
 
-UPLOADED=20
+UPLOADED=24
 
 echo "Authenticating to Google Cloud..."
 echo $GCLOUD_KEYFILE_BASE64 | base64 --decode > /key.json
