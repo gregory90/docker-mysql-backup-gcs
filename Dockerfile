@@ -1,4 +1,4 @@
-FROM gregory90/mysql-backup
+FROM gregory90/mysql-backup:buster
 
 
 ENV DEBIAN_FRONTEND noninteractive
