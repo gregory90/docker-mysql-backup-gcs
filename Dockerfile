@@ -2,14 +2,13 @@ FROM gregory90/mysql-backup:buster
 
 
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install -y -qq --no-install-recommends wget unzip python openssh-client python-openssl && apt-get clean
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 
-# Install the Google Cloud SDK.
-ENV HOME /
-ENV CLOUDSDK_PYTHON_SITEPACKAGES 1
-RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/google-cloud-sdk.zip && unzip google-cloud-sdk.zip && rm google-cloud-sdk.zip
-RUN google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/.bashrc --additional-components app kubectl alpha beta
+RUN apt-get install -y apt-transport-https ca-certificates gnupg
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
 
+
+RUN apt-get update && apt-get install -y google-cloud-sdk
 
 # Disable updater check for the whole installation.
 # Users won't be bugged with notifications to update to the latest version of gcloud.
